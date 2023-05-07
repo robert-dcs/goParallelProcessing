@@ -4,17 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/xuri/excelize/v2"
-	"runtime"
 	"sync"
 	"time"
 )
-
-var wg sync.WaitGroup
-var m sync.Mutex
-
-func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-}
 
 func main() {
 	ctx := context.Background()
@@ -44,7 +36,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	//synchronousProcessing(ctx, listOfPeople)
+	synchronousProcessing(ctx, listOfPeople)
 	parallelProcessing(ctx, listOfPeople)
 }
 
@@ -53,7 +45,7 @@ func synchronousProcessing(ctx context.Context, listOfPeople []string) {
 	personDb.dropAndCreateDatabase(ctx)
 	start := time.Now()
 	for _, person := range listOfPeople {
-		dbError := personDb.persistPerson(ctx, person)
+		dbError := personDb.persistPerson(ctx, person, nil)
 		if dbError != nil {
 			panic(dbError)
 		}
@@ -64,18 +56,26 @@ func synchronousProcessing(ctx context.Context, listOfPeople []string) {
 }
 
 func parallelProcessing(ctx context.Context, listOfPeople []string) {
+	var wg sync.WaitGroup
 	personDb := newConnection(ctx)
 	personDb.dropAndCreateDatabase(ctx)
+
 	start := time.Now()
-	wg.Add(100)
+	count := 0
 	for _, person := range listOfPeople {
+		wg.Add(1)
 		personP := person
 		go func() {
-			err := personDb.persistPerson(ctx, personP)
+			err := personDb.persistPerson(ctx, personP, &wg)
 			if err != nil {
 				fmt.Println(err)
 			}
 		}()
+		if count >= 2000 {
+			wg.Wait()
+			count = 0
+		}
+		count++
 	}
 	wg.Wait()
 	elapsed := time.Since(start).Seconds()

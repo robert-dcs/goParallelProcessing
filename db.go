@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"sync"
 )
 
 const dbUrl = "postgres://postgres:321@localhost:5432/postgres"
@@ -25,12 +26,10 @@ func newConnection(ctx context.Context) DbConnection {
 
 func (c DbConnection) dropAndCreateDatabase(ctx context.Context) {
 	tx, err := c.dbConn.Begin(ctx)
-
 	if err != nil {
 		panic(err.Error())
 	}
-	// Rollback is safe to call even if the tx is already closed, so if
-	// the tx commits successfully, this is a no-op
+
 	defer tx.Rollback(ctx)
 
 	_, err = tx.Exec(ctx, "DROP TABLE IF EXISTS persons")
@@ -38,7 +37,8 @@ func (c DbConnection) dropAndCreateDatabase(ctx context.Context) {
 		panic(err.Error())
 	}
 
-	_, err = tx.Exec(ctx, "CREATE TABLE persons(id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL)")
+	_, err = tx.Exec(ctx, "CR"+
+		"EATE TABLE persons(id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL)")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -50,25 +50,16 @@ func (c DbConnection) dropAndCreateDatabase(ctx context.Context) {
 	fmt.Println("Tabled dropped and created.")
 }
 
-func (c DbConnection) persistPerson(ctx context.Context, person string) error {
-	defer wg.Done()
-	tx, err := c.dbConn.Begin(ctx)
-	if err != nil {
-		return err
+func (c DbConnection) persistPerson(ctx context.Context, person string, wg *sync.WaitGroup) error {
+	if wg != nil {
+		defer wg.Done()
 	}
-	// Rollback is safe to call even if the tx is already closed, so if
-	// the tx commits successfully, this is a no-op
-	defer tx.Rollback(ctx)
 
 	sql := fmt.Sprintf("insert into persons(name) values ('%s')", person)
-	_, err = tx.Exec(ctx, sql)
+	_, err := c.dbConn.Exec(ctx, sql)
 	if err != nil {
 		return err
 	}
 
-	err = tx.Commit(ctx)
-	if err != nil {
-		return err
-	}
 	return nil
 }
