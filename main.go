@@ -11,22 +11,22 @@ import (
 func main() {
 	ctx := context.Background()
 	var listOfPeople []string
-	f, err := excelize.OpenFile("data.xlsx")
+	file, err := excelize.OpenFile("sample/data1000.xlsx")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	rows, err := f.Rows("Sheet1")
-	if err != nil {
-		fmt.Println(err)
+	rows, rowsError := file.Rows("Sheet1")
+	if rowsError != nil {
+		fmt.Println(rowsError)
 		return
 	}
 
 	for rows.Next() {
-		row, err := rows.Columns()
-		if err != nil {
-			fmt.Println(err)
+		row, rowError := rows.Columns()
+		if rowError != nil {
+			fmt.Println(rowError)
 		}
 		for _, colCell := range row {
 			listOfPeople = append(listOfPeople, colCell)
@@ -35,6 +35,7 @@ func main() {
 	if err = rows.Close(); err != nil {
 		fmt.Println(err)
 	}
+	fmt.Printf("First record from sample: %s .\nLast record from sample: %s\n", listOfPeople[0], listOfPeople[len(listOfPeople)-1])
 
 	synchronousProcessing(ctx, listOfPeople)
 	parallelProcessing(ctx, listOfPeople)
@@ -50,9 +51,8 @@ func synchronousProcessing(ctx context.Context, listOfPeople []string) {
 			panic(dbError)
 		}
 	}
-	elapsed := time.Since(start).Seconds()
-	fmt.Printf("Levou %f tempo e processou sincronamente %d linhas.\n", elapsed, len(listOfPeople))
-	fmt.Printf("%s e a primeira pessoa da lista.\n%s e a ultima essoa da lista.\n", listOfPeople[0], listOfPeople[len(listOfPeople)-1])
+	elapsed := time.Since(start).Milliseconds()
+	fmt.Printf("Synchronous implementation tooked %d milliseconds and processed %d records.\n", elapsed, len(listOfPeople))
 }
 
 func parallelProcessing(ctx context.Context, listOfPeople []string) {
@@ -78,8 +78,6 @@ func parallelProcessing(ctx context.Context, listOfPeople []string) {
 		count++
 	}
 	wg.Wait()
-	elapsed := time.Since(start).Seconds()
-
-	fmt.Printf("Levou %f segundos e processou em paralelo %d linhas.\n", elapsed, len(listOfPeople))
-	fmt.Printf("%s e a primeira pessoa da lista.\n%s e a ultima essoa da lista.\n", listOfPeople[0], listOfPeople[len(listOfPeople)-1])
+	elapsed := time.Since(start).Milliseconds()
+	fmt.Printf("Parallel implementation tooked %d milliseconds and processed %d records.\n", elapsed, len(listOfPeople))
 }
