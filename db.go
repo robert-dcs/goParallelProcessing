@@ -32,13 +32,12 @@ func (c DbConnection) dropAndCreateDatabase(ctx context.Context) {
 
 	defer tx.Rollback(ctx)
 
-	_, err = tx.Exec(ctx, "DROP TABLE IF EXISTS persons")
+	_, err = tx.Exec(ctx, "DROP TABLE IF EXISTS person")
 	if err != nil {
 		panic(err.Error())
 	}
 
-	_, err = tx.Exec(ctx, "CR"+
-		"EATE TABLE persons(id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL)")
+	_, err = tx.Exec(ctx, "CREATE TABLE person(id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL)")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -55,7 +54,7 @@ func (c DbConnection) persistPerson(ctx context.Context, person string, wg *sync
 		defer wg.Done()
 	}
 
-	sql := fmt.Sprintf("insert into persons(name) values ('%s')", person)
+	sql := fmt.Sprintf("insert into person(name) values ('%s')", person)
 	_, err := c.dbConn.Exec(ctx, sql)
 	if err != nil {
 		return err

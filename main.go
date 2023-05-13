@@ -52,7 +52,7 @@ func synchronousProcessing(ctx context.Context, listOfPeople []string) {
 		}
 	}
 	elapsed := time.Since(start).Milliseconds()
-	fmt.Printf("Synchronous implementation tooked %d milliseconds and processed %d records.\n", elapsed, len(listOfPeople))
+	fmt.Printf("[Go] Synchronous implementation tooked %d milliseconds and processed %d records.\n", elapsed, len(listOfPeople))
 }
 
 func parallelProcessing(ctx context.Context, listOfPeople []string) {
@@ -79,5 +79,5 @@ func parallelProcessing(ctx context.Context, listOfPeople []string) {
 	}
 	wg.Wait()
 	elapsed := time.Since(start).Milliseconds()
-	fmt.Printf("Parallel implementation tooked %d milliseconds and processed %d records.\n", elapsed, len(listOfPeople))
+	fmt.Printf("[Go] Parallel implementation tooked %d milliseconds and processed %d records.\n", elapsed, len(listOfPeople))
 }
