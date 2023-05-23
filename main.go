@@ -35,7 +35,8 @@ func main() {
 	if err = rows.Close(); err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("First record from sample: %s .\nLast record from sample: %s\n", listOfPeople[0], listOfPeople[len(listOfPeople)-1])
+	fmt.Printf("First record from sample: %s\n", listOfPeople[0])
+	fmt.Printf("Last record from sample: %s\n", listOfPeople[len(listOfPeople)-1])
 
 	synchronousProcessing(ctx, listOfPeople)
 	parallelProcessing(ctx, listOfPeople)
@@ -52,7 +53,8 @@ func synchronousProcessing(ctx context.Context, listOfPeople []string) {
 		}
 	}
 	elapsed := time.Since(start).Milliseconds()
-	fmt.Printf("[Go] Synchronous implementation tooked %d milliseconds and processed %d records.\n", elapsed, len(listOfPeople))
+	fmt.Printf("[Go] Parallel implementation tooked %d milliseconds.\n", elapsed)
+	fmt.Printf("[Go] Processed %d records.\n", len(listOfPeople))
 }
 
 func parallelProcessing(ctx context.Context, listOfPeople []string) {
@@ -79,5 +81,6 @@ func parallelProcessing(ctx context.Context, listOfPeople []string) {
 	}
 	wg.Wait()
 	elapsed := time.Since(start).Milliseconds()
-	fmt.Printf("[Go] Parallel implementation tooked %d milliseconds and processed %d records.\n", elapsed, len(listOfPeople))
+	fmt.Printf("[Go] Parallel implementation tooked %d milliseconds.\n", elapsed)
+	fmt.Printf("[Go] Processed %d records.\n", len(listOfPeople))
 }
