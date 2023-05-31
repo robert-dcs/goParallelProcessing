@@ -50,14 +50,14 @@ func (c DbConnection) dropAndCreateDatabase(ctx context.Context) {
 }
 
 func (c DbConnection) persistPerson(ctx context.Context, person string, wg *sync.WaitGroup) error {
-	if wg != nil {
-		defer wg.Done()
-	}
-
 	sql := fmt.Sprintf("insert into person(name) values ('%s')", person)
 	_, err := c.dbConn.Exec(ctx, sql)
 	if err != nil {
 		return err
+	}
+
+	if wg != nil {
+		defer wg.Done()
 	}
 
 	return nil
