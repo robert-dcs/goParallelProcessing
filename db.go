@@ -46,7 +46,7 @@ func (c DbConnection) dropAndCreateDatabase(ctx context.Context) {
 	if err != nil {
 		panic(err.Error())
 	}
-	fmt.Println("Tabled dropped and created.")
+	fmt.Println("Db initialized")
 }
 
 func (c DbConnection) persistPerson(ctx context.Context, person string, wg *sync.WaitGroup) error {
@@ -59,6 +59,44 @@ func (c DbConnection) persistPerson(ctx context.Context, person string, wg *sync
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (c DbConnection) countRows(ctx context.Context) error {
+	var numberOfRows int
+
+	sql := "SELECT count(*) FROM person"
+	err := c.dbConn.QueryRow(ctx, sql).Scan(&numberOfRows)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Db number of rows: %v \n", numberOfRows)
+
+	return nil
+}
+func (c DbConnection) getFirstRecord(ctx context.Context) error {
+	var firstRecord string
+
+	sql := "SELECT name FROM person ORDER BY id ASC LIMIT 1"
+	err := c.dbConn.QueryRow(ctx, sql).Scan(&firstRecord)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("First record: %v \n", firstRecord)
+
+	return nil
+}
+
+func (c DbConnection) getLastRecord(ctx context.Context) error {
+	var lastRecord string
+
+	sql := "SELECT name FROM person ORDER BY id DESC LIMIT 1"
+	err := c.dbConn.QueryRow(ctx, sql).Scan(&lastRecord)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Last record: %v \n", lastRecord)
 
 	return nil
 }

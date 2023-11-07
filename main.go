@@ -14,42 +14,48 @@ type algorithmProcessor struct {
 }
 
 func main() {
-	sampleSize := 1000000
 	ctx := context.Background()
-	var listOfPeople []string
-	file, err := excelize.OpenFile("sample/data" + strconv.Itoa(sampleSize) + ".xlsx")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	rows, rowsError := file.Rows("Sheet1")
-	if rowsError != nil {
-		fmt.Println(rowsError)
-		return
-	}
+	for sampleSize := 1000; sampleSize <= 1000000; sampleSize *= 10 {
+		fmt.Printf("\n*--------- New execution: sample size %v ----------*", sampleSize)
 
-	for rows.Next() {
-		row, rowError := rows.Columns()
-		if rowError != nil {
-			fmt.Println(rowError)
+		var listOfPeople []string
+		file, err := excelize.OpenFile("sample/data" + strconv.Itoa(sampleSize) + ".xlsx")
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
-		for _, colCell := range row {
-			listOfPeople = append(listOfPeople, colCell)
+		rows, rowsError := file.Rows("Sheet1")
+		if rowsError != nil {
+			fmt.Println(rowsError)
+			return
 		}
-	}
-	if err = rows.Close(); err != nil {
-		fmt.Println(err)
-	}
-	fmt.Printf("First record from sample: %s\n", listOfPeople[0])
-	fmt.Printf("Last record from sample: %s\n", listOfPeople[len(listOfPeople)-1])
-	for i := 0; i < 1; i++ {
-		synchronousProcessing(ctx, listOfPeople)
-		parallelProcessing(ctx, listOfPeople)
-		parallelProcessing2(ctx, listOfPeople)
+
+		for rows.Next() {
+			row, rowError := rows.Columns()
+			if rowError != nil {
+				fmt.Println(rowError)
+			}
+			for _, colCell := range row {
+				listOfPeople = append(listOfPeople, colCell)
+			}
+		}
+		if err = rows.Close(); err != nil {
+			fmt.Println(err)
+		}
+		fmt.Printf("\nFirst record from sample: %s\n", listOfPeople[0])
+		fmt.Printf("Last record from sample: %s\n", listOfPeople[len(listOfPeople)-1])
+		for i := 0; i < 3; i++ {
+			fmt.Printf("\n*--------- %v execution ---------*", i)
+			synchronousProcessing(ctx, listOfPeople)
+			parallelProcessing(ctx, listOfPeople)
+			parallelProcessing2(ctx, listOfPeople)
+		}
 	}
 }
 
 func synchronousProcessing(ctx context.Context, listOfPeople []string) {
+	fmt.Println("\n*--------- Synchronous ----------*")
+
 	personDb := newConnection(ctx)
 	defer personDb.dbConn.Close()
 	personDb.dropAndCreateDatabase(ctx)
@@ -67,9 +73,23 @@ func synchronousProcessing(ctx context.Context, listOfPeople []string) {
 
 	fmt.Printf("[Go] Synchronous implementation tooked %d milliseconds.\n", elapsed)
 	fmt.Printf("[Go] Processed %d records.\n", len(listOfPeople))
+	err := personDb.countRows(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = personDb.getFirstRecord(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = personDb.getLastRecord(ctx)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func parallelProcessing(ctx context.Context, listOfPeople []string) {
+	fmt.Println("\n*--------- Parallel 1 ----------*")
+
 	var wg sync.WaitGroup
 	personDb := newConnection(ctx)
 	defer personDb.dbConn.Close()
@@ -97,9 +117,23 @@ func parallelProcessing(ctx context.Context, listOfPeople []string) {
 
 	fmt.Printf("[Go] Parallel implementation 1 tooked %d milliseconds.\n", elapsed)
 	fmt.Printf("[Go] Processed %d records.\n", len(listOfPeople))
+	err := personDb.countRows(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = personDb.getFirstRecord(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = personDb.getLastRecord(ctx)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func parallelProcessing2(ctx context.Context, listOfPeople []string) {
+	fmt.Println("\n*--------- Parallel 2 ----------*")
+
 	personDb := newConnection(ctx)
 	defer personDb.dbConn.Close()
 	personDb.dropAndCreateDatabase(ctx)
@@ -128,4 +162,16 @@ func parallelProcessing2(ctx context.Context, listOfPeople []string) {
 
 	fmt.Printf("[Go] Parallel implementation 2 took %d milliseconds.\n", elapsed)
 	fmt.Printf("[Go] Processed %d records.\n", len(listOfPeople))
+	err := personDb.countRows(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = personDb.getFirstRecord(ctx)
+	if err != nil {
+		panic(err)
+	}
+	err = personDb.getLastRecord(ctx)
+	if err != nil {
+		panic(err)
+	}
 }
